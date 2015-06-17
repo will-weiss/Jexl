@@ -23,7 +23,7 @@ describe('Jexl', function() {
 		return inst.eval('2+2').should.become(4);
 	});
 	it('should reject Promise on error', function() {
-		return inst.eval('2++2').should.reject;
+		return inst.eval('2+^2').should.reject;
 	});
 	it('should call callback with success result', function(done) {
 		inst.eval('2+2', function(err, res) {
@@ -32,7 +32,7 @@ describe('Jexl', function() {
 		});
 	});
 	it('should call callback with error result', function(done) {
-		inst.eval('2++2', function(err, res) {
+		inst.eval('2+^2', function(err, res) {
 			should.exist(err);
 			should.not.exist(res);
 			done();
@@ -246,17 +246,12 @@ describe('Jexl', function() {
 	it('should evaluate an expression over each context in an array', function() {
 		return inst.eval("x + 2", [{x: 1}, {x: 2}, {x: 3}]).should.eventually.deep.equal([3,4,5]);
 	});
-	it('should allow results to be streamed', function() {
-		return new Promise(function(resolve, reject) {
-			var results = [];
-			var stream = inst.stream("x + 2", [{x: 1}, {x: 2}, {x: 3}]);
-			stream.on('data', results.push.bind(results));
-			stream.on('error', reject);
-			stream.on('end', resolve.bind(Promise, results));
-		}).should.eventually.deep.equal([3,4,5]);
+	it('should allow results to be relayed', function() {
+		var relay = inst.relay("x + 2", [{x: 1}, {x: 2}, {x: 3}]);
+		return relay.value.should.eventually.deep.equal([3,4,5]);
 	});
-	it('should interpret a stream of results', function() {
-		var stream = inst.stream("{y: x + 2}", [{x: 1}, {x: 2}, {x: 3}]);
-		return inst.eval('y * 2', stream).should.eventually.deep.equal([6,8,10]);
+	it('should interpret a relay of results', function() {
+		var relay = inst.relay("{y: x + 2}", [{x: 1}, {x: 2}, {x: 3}]);
+		return inst.eval('y * 2', relay).should.eventually.deep.equal([6,8,10]);
 	});
 });

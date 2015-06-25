@@ -248,7 +248,7 @@ describe('Jexl', function() {
 	});
 	it('should allow results to be relayed', function() {
 		var relay = inst.relay("x + 2", [{x: 1}, {x: 2}, {x: 3}]);
-		return relay.value().should.eventually.deep.equal([3,4,5]);
+		return relay.value.should.eventually.deep.equal([3,4,5]);
 	});
 	it('should interpret a relay of results', function() {
 		var relay = inst.relay("{y: x + 2}", [{x: 1}, {x: 2}, {x: 3}]);

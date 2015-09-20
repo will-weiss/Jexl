@@ -6,6 +6,10 @@
   "directories": {
     "test": "test"
   },
+  "bin": {
+    "jexl": "./bin/jexl"
+  },
+  "preferGlobal": true,
   "scripts": {
     "test": "istanbul cover _mocha -- -R spec --recursive test",
     "prepublish": "gulp"
@@ -36,6 +40,7 @@
     "browserify": "9.0.3",
     "chai": "2.0.0",
     "chai-as-promised": "4.2.0",
+    "chalk": "^1.0.0",
     "gulp": "3.8.11",
     "gulp-istanbul": "0.6.0",
     "gulp-istanbul-enforcer": "1.0.3",

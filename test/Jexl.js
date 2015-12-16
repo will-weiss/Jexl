@@ -23,7 +23,7 @@ describe('Jexl', function() {
 		return inst.eval('2+2').should.become(4);
 	});
 	it('should reject Promise on error', function() {
-		return inst.eval('2++2').should.reject;
+		return inst.eval('2+^2').should.reject;
 	});
 	it('should call callback with success result', function(done) {
 		inst.eval('2+2', function(err, res) {
@@ -32,7 +32,7 @@ describe('Jexl', function() {
 		});
 	});
 	it('should call callback with error result', function(done) {
-		inst.eval('2++2', function(err, res) {
+		inst.eval('2+^2', function(err, res) {
 			should.exist(err);
 			should.not.exist(res);
 			done();

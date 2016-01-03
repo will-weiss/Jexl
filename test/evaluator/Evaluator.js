@@ -11,18 +11,14 @@ var chai = require('chai'),
 	Evaluator = require('../../lib/evaluator/Evaluator'),
 	grammar = require('../../lib/grammar').elements;
 
-if (!global.Promise)
-	global.Promise = require('bluebird').Promise;
-
 chai.use(chaiAsPromised);
 
 var lexer = new Lexer(grammar);
 
 function toTree(exp) {
 	var p = new Parser(grammar);
-	var lines = lexer.tokenizeLines(exp);
-	lines.length.should.equal(1);
-	return p.addTokens(lines[0]);
+	p.addTokens(lexer.tokenize(exp));
+	return p.complete();
 }
 
 describe('Evaluator', function() {
@@ -97,7 +93,7 @@ describe('Evaluator', function() {
 	});
 	it('should throw when transform does not exist', function() {
 		var e = new Evaluator(grammar);
-		return e.eval(toTree('"hello"|world')).should.eventually.be.rejected;
+		return e.eval(toTree('"hello"|world')).should.reject;
 	});
 	it('should apply the DivFloor operator', function() {
 		var e = new Evaluator(grammar);
@@ -135,21 +131,6 @@ describe('Evaluator', function() {
 		return e.eval(toTree('["foo", 1+2]'))
 			.should.eventually.deep.equal(["foo", 3]);
 	});
-	it('should evaluate an && operator with a falsy first argument', function() {
-		var e = new Evaluator(grammar);
-		return e.eval(toTree('0 && 7'))
-			.should.eventually.deep.equal(0);
-	});
-	it('should evaluate an || operator with a truthy first argument', function() {
-		var e = new Evaluator(grammar);
-		return e.eval(toTree('"hi" || 7'))
-			.should.eventually.deep.equal("hi");
-	});
-	it('should evaluate an || operator with a falsy first argument', function() {
-		var e = new Evaluator(grammar);
-		return e.eval(toTree('"" || 7'))
-			.should.eventually.deep.equal(7);
-	});
 	it('should apply the "in" operator to strings', function() {
 		var e = new Evaluator(grammar);
 		return Promise.all([
@@ -163,10 +144,6 @@ describe('Evaluator', function() {
 			e.eval(toTree('"bar" in ["foo","bar","tek"]')).should.become(true),
 			e.eval(toTree('"baz" in ["foo","bar","tek"]')).should.become(false)
 		]);
-	});
-	it('should return false when the "in" operator is applied to other types', function() {
-		var e = new Evaluator(grammar);
-		return e.eval(toTree('"bar" in {bar: 5}')).should.become(false);
 	});
 	it('should evaluate a conditional expression', function() {
 		var e = new Evaluator(grammar);

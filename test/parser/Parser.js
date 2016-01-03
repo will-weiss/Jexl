@@ -217,11 +217,11 @@ describe('Parser', function() {
       "function": {
         "type": "CallExpression",
         "function": {
-          "type": "VariableIdentifier",
+          "type": "Identifier",
           "value": "foo"
         },
         "right": {
-          "type": "VariableIdentifier",
+          "type": "Identifier",
           "value": "bar"
         }
       },
@@ -235,7 +235,7 @@ describe('Parser', function() {
     simpleParse('foo(5 + 7)').should.deep.equal({
       "type": "CallExpression",
       "function": {
-        "type": "VariableIdentifier",
+        "type": "Identifier",
         "value": "foo"
       },
       "right": {
@@ -256,7 +256,7 @@ describe('Parser', function() {
     simpleParse('foo(bar 5 7)').should.deep.equal({
       "type": "CallExpression",
       "function": {
-        "type": "VariableIdentifier",
+        "type": "Identifier",
         "value": "foo"
       },
       "right": {
@@ -264,7 +264,7 @@ describe('Parser', function() {
         "function": {
           "type": "CallExpression",
           "function": {
-            "type": "VariableIdentifier",
+            "type": "Identifier",
             "value": "bar"
           },
           "right": {
@@ -286,17 +286,17 @@ describe('Parser', function() {
       left: {
         type: 'CallExpression',
         function: {
-          "type": "VariableIdentifier",
+          "type": "Identifier",
           "value": "baz"
         },
         right: {
           type: 'CallExpression',
           function: {
-            "type": "VariableIdentifier",
+            "type": "Identifier",
             "value": "bar"
           },
           right: {
-            type: 'VariableIdentifier',
+            type: 'Identifier',
             value: 'foo'
           }
         }
@@ -310,11 +310,11 @@ describe('Parser', function() {
       function: {
         type: 'CallExpression',
         function: {
-          "type": "VariableIdentifier",
+          "type": "Identifier",
           "value": "slice"
         },
         right: {
-          type: 'VariableIdentifier',
+          type: 'Identifier',
           value: 'foo'
         }
       },
@@ -325,58 +325,11 @@ describe('Parser', function() {
     });
     simpleParse('foo.slice(1)').should.deep.equal(simpleParse('slice foo 1'));
   });
-  it('handles a ternary expression', function() {
-    simpleParse('foo ? 1 : 0').should.deep.equal({
-      type: 'ConditionalExpression',
-      test: {type: 'VariableIdentifier', value: 'foo'},
-      consequent: {type: 'Literal', value: 1},
-      alternate: {type: 'Literal', value: 0}
-    });
-  });
-  it('handles nested and grouped ternary expressions', function() {
-    simpleParse('foo ? (bar ? 1 : 2) : 3').should.deep.equal({
-      type: 'ConditionalExpression',
-      test: {type: 'VariableIdentifier', value: 'foo'},
-      consequent: {
-        type: 'ConditionalExpression',
-        test: {type: 'VariableIdentifier', value: 'bar'},
-        consequent: {type: 'Literal', value: 1},
-        alternate: {type: 'Literal', value: 2}
-      },
-      alternate: {type: 'Literal', value: 3}
-    });
-  });
-  it('handles nested, non-grouped ternary expressions', function() {
-    simpleParse('foo ? bar ? 1 : 2 : 3').should.deep.equal({
-      type: 'ConditionalExpression',
-      test: {type: 'VariableIdentifier', value: 'foo'},
-      consequent: {
-        type: 'ConditionalExpression',
-        test: {type: 'VariableIdentifier', value: 'bar'},
-        consequent: {type: 'Literal', value: 1},
-        alternate: {type: 'Literal', value: 2}
-      },
-      alternate: {type: 'Literal', value: 3}
-    });
-  });
-  it('handles ternary expression with objects', function() {
-    simpleParse('foo ? {bar: "tek"} : "baz"').should.deep.equal({
-      type: 'ConditionalExpression',
-      test: {type: 'VariableIdentifier', value: 'foo'},
-      consequent: {
-        type: 'ObjectLiteral',
-        value: {
-          bar: {type: 'Literal', value: 'tek'}
-        }
-      },
-      alternate: {type: 'Literal', value: 'baz'}
-    });
-  });
   it('allows variable declarations', function() {
     simpleParse('foo = 5').should.deep.equal({
-      type: 'VariableDefinition',
+      type: 'Definition',
       "left": {
-        "type": "VariableIdentifier",
+        "type": "Identifier",
         "value": "foo"
       },
       right: {
@@ -387,22 +340,25 @@ describe('Parser', function() {
   });
   it('allows enum type declarations', function() {
     simpleParse('Color = red | blue | yellow').should.deep.equal({
-      type: 'TypeDefinition',
-      identifier: 'Color',
+      type: 'Definition',
+      left: {
+        "type": "Identifier",
+        "value": "Color"
+      },
       right: {
         type: 'UnionExpression',
         left: {
-          type: 'VariableIdentifier',
+          type: 'Identifier',
           value: 'red'
         },
         right: {
           type: 'UnionExpression',
           left: {
-            type: 'VariableIdentifier',
+            type: 'Identifier',
             value: 'blue'
           },
           right: {
-            type: 'VariableIdentifier',
+            type: 'Identifier',
             value: 'yellow'
           }
         }
@@ -411,10 +367,10 @@ describe('Parser', function() {
   });
   it('recognizes typings', function() {
     simpleParse('foo: string = "b"').should.deep.equal({
-      "type": "VariableDefinition",
+      "type": "Definition",
       "varType": "string",
       "left": {
-        "type": "VariableIdentifier",
+        "type": "Identifier",
         "value": "foo"
       },
       "right": {
@@ -425,32 +381,32 @@ describe('Parser', function() {
   });
   it('recognizes function typings', function() {
     simpleParse('foo: string -> number -> boolean').should.deep.equal({
-      "type": "VariableDefinition",
+      "type": "Definition",
       "varType": ["string", "number", "boolean"],
       "left": {
-        "type": "VariableIdentifier",
+        "type": "Identifier",
         "value": "foo"
       }
     });
   });
   it('recognizes function typings', function() {
     simpleParse('foo a b = a + b').should.deep.equal({
-      "type": "VariableDefinition",
+      "type": "Definition",
       "left": {
         "type": "CallExpression",
         "function": {
           "type": "CallExpression",
           "function": {
-            "type": "VariableIdentifier",
+            "type": "Identifier",
             "value": "foo",
           },
           "right": {
-            "type": "VariableIdentifier",
+            "type": "Identifier",
             "value": "a",
           },
         },
         "right": {
-          "type": "VariableIdentifier",
+          "type": "Identifier",
           "value": "b",
         },
       },
@@ -458,18 +414,24 @@ describe('Parser', function() {
         "type": "BinaryExpression",
         "operator": "+",
         "left": {
-          "type": "VariableIdentifier",
+          "type": "Identifier",
           "value": "a",
         },
         "right": {
-          "type": "VariableIdentifier",
+          "type": "Identifier",
           "value": "b",
         },
       },
     });
   });
-  it('recognizes function typings', function() {
+  it('throws on multiple definitions', function() {
     return simpleParse.bind(null, 'foo = bar = baz').should.throw();
+  });
+  it('throws on relative definitions', function() {
+    return simpleParse.bind(null, '[a = 5]').should.throw();
+  });
+  it('throws on relative definitions', function() {
+    return simpleParse.bind(null, '(a = 5)').should.throw();
   });
 
 
@@ -479,12 +441,12 @@ describe('Parser', function() {
   //     type: 'BinaryExpression',
   //     operator: '+',
   //     left: {
-  //       type: 'VariableIdentifier',
+  //       type: 'Identifier',
   //       value: 'length',
   //       from: {type: 'Literal', value: 'foo'}
   //     },
   //     right: {
-  //       type: 'VariableIdentifier',
+  //       type: 'Identifier',
   //       value: 'foo',
   //       from: {
   //         type: 'ObjectLiteral',
@@ -497,7 +459,7 @@ describe('Parser', function() {
   // });
   // it('allows dot notation on subexpressions', function() {
   //   simpleParse('("foo" + "bar").length').should.deep.equal({
-  //     type: 'VariableIdentifier',
+  //     type: 'Identifier',
   //     value: 'length',
   //     from: {
   //       type: 'BinaryExpression',
@@ -509,7 +471,7 @@ describe('Parser', function() {
   // });
   // it('allows dot notation on arrays', function() {
   //   simpleParse('["foo", "bar"].length').should.deep.equal({
-  //     type: 'VariableIdentifier',
+  //     type: 'Identifier',
   //     value: 'length',
   //     from: {
   //       type: 'ArrayLiteral',

@@ -210,16 +210,44 @@ describe('Parser', function() {
     });
   });
   it('applies functions', function() {
-    simpleParse('foo 1 2').should.deep.equal({
-      type: 'CallExpression',
-      function: {
-        type: 'CallExpression',
-        function: {type: 'VariableIdentifier', value: 'foo'},
-        argument: {type: 'Literal', value: 1}
+    simpleParse('foo bar 2').should.deep.equal({
+      "type": "CallExpression",
+      "function": {
+        "type": "CallExpression",
+        "function": {
+          "type": "VariableIdentifier",
+          "value": "foo"
+        },
+        "argument": {
+          "type": "VariableIdentifier",
+          "value": "bar"
+        }
       },
-      argument: {type: 'Literal', value: 2}
+      "argument": {
+        "type": "Literal",
+        "value": 2
+      }
     });
   });
+  // it('chains traversed identifiers', function() {
+  //   simpleParse('foo.bar.baz + 1').should.deep.equal({
+  //     type: 'BinaryExpression',
+  //     operator: '+',
+  //     left: {
+  //       type: 'CallExpression',
+  //       function: 'baz',
+  //       argument: {
+  //         type: 'CallExpression',
+  //         function: 'bar',
+  //         from: {
+  //           type: 'VariableIdentifier',
+  //           value: 'foo'
+  //         }
+  //       }
+  //     },
+  //     right: {type: 'Literal', value: 1}
+  //   });
+  // });
   it('chains traversed identifiers', function() {
     simpleParse('foo.bar.baz + 1').should.deep.equal({
       type: 'BinaryExpression',

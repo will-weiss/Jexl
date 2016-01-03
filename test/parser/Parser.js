@@ -17,20 +17,20 @@ function completeParse(exp) {
   return inst.complete();
 };
 
-function simpleParse(exp) {
+function parse(exp) {
   var tokenized = lexer.tokenize(exp);
   var inst = new Parser(grammar);
   inst.addTokens(tokenized);
   return inst.complete();
 };
 
-// function simpleParse(exp) {
+// function parse(exp) {
 //   return completeParse(exp).body[0];
 // }
 
 describe('Parser', function() {
   it('constructs an AST for 1+2', function() {
-    simpleParse('1+2').should.deep.equal({
+    parse('1+2').should.deep.equal({
       type: 'BinaryExpression',
       operator: '+',
       left: {type: 'Literal', value: 1},
@@ -38,7 +38,7 @@ describe('Parser', function() {
     });
   });
   it('adds heavier operations to the right for 2+3*4', function() {
-    simpleParse('2+3*4').should.deep.equal({
+    parse('2+3*4').should.deep.equal({
       type: 'BinaryExpression',
       operator: '+',
       left: {type: 'Literal', value: 2},
@@ -51,7 +51,7 @@ describe('Parser', function() {
     });
   });
   it('encapsulates for lighter operation in 2*3+4', function() {
-    simpleParse('2*3+4').should.deep.equal({
+    parse('2*3+4').should.deep.equal({
       type: 'BinaryExpression',
       operator: '+',
       left: {
@@ -64,7 +64,7 @@ describe('Parser', function() {
     });
   });
   it('handles encapsulation of subtree in 2+3*4==5/6-7', function() {
-    simpleParse('2+3*4==5/6-7').should.deep.equal({
+    parse('2+3*4==5/6-7').should.deep.equal({
       type: 'BinaryExpression',
       operator: '==',
       left: {
@@ -92,7 +92,7 @@ describe('Parser', function() {
     });
   });
   it('handles a unary operator', function() {
-    simpleParse('1*!!true-2').should.deep.equal({
+    parse('1*!!true-2').should.deep.equal({
       type: 'BinaryExpression',
       operator: '-',
       left: {
@@ -113,7 +113,7 @@ describe('Parser', function() {
     });
   });
   it('handles a subexpression', function() {
-    simpleParse('(2+3)*4').should.deep.equal({
+    parse('(2+3)*4').should.deep.equal({
       type: 'BinaryExpression',
       operator: '*',
       left: {
@@ -126,7 +126,7 @@ describe('Parser', function() {
     });
   });
   it('handles nested subexpressions', function() {
-    simpleParse('(4*(2+3))/5').should.deep.equal({
+    parse('(4*(2+3))/5').should.deep.equal({
       type: 'BinaryExpression',
       operator: '/',
       left: {
@@ -144,7 +144,7 @@ describe('Parser', function() {
     });
   });
   it('handles object literals', function() {
-    simpleParse('{foo: "bar", tek: 1+2}').should.deep.equal({
+    parse('{foo: "bar", tek: 1+2}').should.deep.equal({
       type: 'ObjectLiteral',
       value: {
         foo: {type: 'Literal', value: 'bar'},
@@ -158,7 +158,7 @@ describe('Parser', function() {
     });
   });
   it('handles nested object literals', function() {
-    simpleParse('{foo: {bar: "tek"}}').should.deep.equal({
+    parse('{foo: {bar: "tek"}}').should.deep.equal({
       type: 'ObjectLiteral',
       value: {
         foo: {
@@ -171,13 +171,13 @@ describe('Parser', function() {
     });
   });
   it('handles empty object literals', function() {
-    simpleParse('{}').should.deep.equal({
+    parse('{}').should.deep.equal({
       type: 'ObjectLiteral',
       value: {}
     });
   });
   it('handles array literals', function() {
-    simpleParse('["foo", 1+2]').should.deep.equal({
+    parse('["foo", 1+2]').should.deep.equal({
       type: 'ArrayLiteral',
       value: [
         {type: 'Literal', value: 'foo'},
@@ -191,7 +191,7 @@ describe('Parser', function() {
     });
   });
   it('handles nested array literals', function() {
-    simpleParse('["foo", ["bar", "tek"]]').should.deep.equal({
+    parse('["foo", ["bar", "tek"]]').should.deep.equal({
       type: 'ArrayLiteral',
       value: [
         {type: 'Literal', value: 'foo'},
@@ -206,13 +206,13 @@ describe('Parser', function() {
     });
   });
   it('handles empty array literals', function() {
-    simpleParse('[]').should.deep.equal({
+    parse('[]').should.deep.equal({
       type: 'ArrayLiteral',
       value: []
     });
   });
   it('applies functions', function() {
-    simpleParse('foo bar 2').should.deep.equal({
+    parse('foo bar 2').should.deep.equal({
       "type": "CallExpression",
       "function": {
         "type": "CallExpression",
@@ -232,7 +232,7 @@ describe('Parser', function() {
     });
   });
   it('applies functions using parens', function() {
-    simpleParse('foo(5 + 7)').should.deep.equal({
+    parse('foo(5 + 7)').should.deep.equal({
       "type": "CallExpression",
       "function": {
         "type": "Identifier",
@@ -253,7 +253,7 @@ describe('Parser', function() {
     });
   });
   it('applies more functions using parens', function() {
-    simpleParse('foo(bar 5 7)').should.deep.equal({
+    parse('foo(bar 5 7)').should.deep.equal({
       "type": "CallExpression",
       "function": {
         "type": "Identifier",
@@ -280,7 +280,7 @@ describe('Parser', function() {
     });
   });
   it('treats dot as function application', function() {
-    simpleParse('foo.bar.baz + 1').should.deep.equal({
+    parse('foo.bar.baz + 1').should.deep.equal({
       type: 'BinaryExpression',
       operator: '+',
       left: {
@@ -305,7 +305,7 @@ describe('Parser', function() {
     });
   });
   it('treats dot as function application with additional arguments', function() {
-    simpleParse('foo.slice(1)').should.deep.equal({
+    parse('foo.slice(1)').should.deep.equal({
       type: 'CallExpression',
       function: {
         type: 'CallExpression',
@@ -323,10 +323,10 @@ describe('Parser', function() {
         "value": 1
       },
     });
-    simpleParse('foo.slice(1)').should.deep.equal(simpleParse('slice foo 1'));
+    parse('foo.slice(1)').should.deep.equal(parse('slice foo 1'));
   });
   it('allows variable declarations', function() {
-    simpleParse('foo = 5').should.deep.equal({
+    parse('foo = 5').should.deep.equal({
       type: 'Definition',
       "left": {
         "type": "Identifier",
@@ -339,7 +339,7 @@ describe('Parser', function() {
     });
   });
   it('allows enum type declarations', function() {
-    simpleParse('Color = red | blue | yellow').should.deep.equal({
+    parse('Color = red | blue | yellow').should.deep.equal({
       type: 'Definition',
       left: {
         "type": "Identifier",
@@ -366,7 +366,7 @@ describe('Parser', function() {
     });
   });
   it('recognizes typings', function() {
-    simpleParse('foo: string = "b"').should.deep.equal({
+    parse('foo: string = "b"').should.deep.equal({
       "type": "Definition",
       "varType": "string",
       "left": {
@@ -380,7 +380,7 @@ describe('Parser', function() {
     });
   });
   it('recognizes function typings', function() {
-    simpleParse('foo: string -> number -> boolean').should.deep.equal({
+    parse('foo: string -> number -> boolean').should.deep.equal({
       "type": "Definition",
       "varType": ["string", "number", "boolean"],
       "left": {
@@ -390,7 +390,7 @@ describe('Parser', function() {
     });
   });
   it('recognizes function typings', function() {
-    simpleParse('foo a b = a + b').should.deep.equal({
+    parse('foo a b = a + b').should.deep.equal({
       "type": "Definition",
       "left": {
         "type": "CallExpression",
@@ -425,61 +425,15 @@ describe('Parser', function() {
     });
   });
   it('throws on multiple definitions', function() {
-    return simpleParse.bind(null, 'foo = bar = baz').should.throw();
+    parse.bind(null, 'foo = bar = baz').should.throw();
   });
   it('throws on relative definitions', function() {
-    return simpleParse.bind(null, '[a = 5]').should.throw();
+    parse.bind(null, '[a = 5]').should.throw();
+    parse.bind(null, '(a = 5)').should.throw();
   });
-  it('throws on relative definitions', function() {
-    return simpleParse.bind(null, '(a = 5)').should.throw();
+  it('parses record syntax', function() {
+    parse('foo = a Foo { a = 3 }').should.deep.equal({
+
+    });
   });
-
-
-
-  // it('allows dot notation for all operands', function() {
-  //   simpleParse('"foo".length + {foo: "bar"}.foo').should.deep.equal({
-  //     type: 'BinaryExpression',
-  //     operator: '+',
-  //     left: {
-  //       type: 'Identifier',
-  //       value: 'length',
-  //       from: {type: 'Literal', value: 'foo'}
-  //     },
-  //     right: {
-  //       type: 'Identifier',
-  //       value: 'foo',
-  //       from: {
-  //         type: 'ObjectLiteral',
-  //         value: {
-  //           foo: {type: 'Literal', value: 'bar'}
-  //         }
-  //       }
-  //     }
-  //   });
-  // });
-  // it('allows dot notation on subexpressions', function() {
-  //   simpleParse('("foo" + "bar").length').should.deep.equal({
-  //     type: 'Identifier',
-  //     value: 'length',
-  //     from: {
-  //       type: 'BinaryExpression',
-  //       operator: '+',
-  //       left: {type: 'Literal', value: 'foo'},
-  //       right: {type: 'Literal', value: 'bar'}
-  //     }
-  //   });
-  // });
-  // it('allows dot notation on arrays', function() {
-  //   simpleParse('["foo", "bar"].length').should.deep.equal({
-  //     type: 'Identifier',
-  //     value: 'length',
-  //     from: {
-  //       type: 'ArrayLiteral',
-  //       value: [
-  //         {type: 'Literal', value: 'foo'},
-  //         {type: 'Literal', value: 'bar'}
-  //       ]
-  //     }
-  //   });
-  // });
 });

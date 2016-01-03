@@ -13,6 +13,8 @@ var inst,
 
 function completeParse(exp) {
   var tokenized = lexer.tokenize(exp);
+  // console.log(tokenized)
+
   inst.addTokens(tokenized);
   return inst.complete();
 };
@@ -406,7 +408,7 @@ describe('Parser', function() {
     simpleParse('Color = red | blue | yellow').should.deep.equal({
       type: 'TypeDeclaration',
       identifier: 'Color',
-      init: {
+      right: {
         type: 'UnionExpression',
         left: {
           type: 'VariableIdentifier',

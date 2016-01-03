@@ -218,14 +218,35 @@ describe('Parser', function() {
           "type": "VariableIdentifier",
           "value": "foo"
         },
-        "argument": {
+        "right": {
           "type": "VariableIdentifier",
           "value": "bar"
         }
       },
-      "argument": {
+      "right": {
         "type": "Literal",
         "value": 2
+      }
+    });
+  });
+  it('applies functions using parens', function() {
+    simpleParse('foo(5 + 7)').should.deep.equal({
+      "type": "CallExpression",
+      "function": {
+        "type": "VariableIdentifier",
+        "value": "foo"
+      },
+      "right": {
+        "type": "BinaryExpression",
+        "operator": "+",
+        "left": {
+          "type": "Literal",
+          "value": 5
+        },
+        "right": {
+          "type": "Literal",
+          "value": 7
+        }
       }
     });
   });
@@ -239,13 +260,13 @@ describe('Parser', function() {
           "type": "VariableIdentifier",
           "value": "baz"
         },
-        argument: {
+        right: {
           type: 'CallExpression',
           function: {
             "type": "VariableIdentifier",
             "value": "bar"
           },
-          argument: {
+          right: {
             type: 'VariableIdentifier',
             value: 'foo'
           }

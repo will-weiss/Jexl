@@ -209,6 +209,17 @@ describe('Parser', function() {
       value: []
     });
   });
+  it('applies functions', function() {
+    simpleParse('foo 1 2').should.deep.equal({
+      type: 'CallExpression',
+      function: {
+        type: 'CallExpression',
+        function: {type: 'VariableIdentifier', value: 'foo'},
+        argument: {type: 'Literal', value: 1}
+      },
+      argument: {type: 'Literal', value: 2}
+    });
+  });
   it('chains traversed identifiers', function() {
     simpleParse('foo.bar.baz + 1').should.deep.equal({
       type: 'BinaryExpression',
@@ -228,79 +239,6 @@ describe('Parser', function() {
       right: {type: 'Literal', value: 1}
     });
   });
-  // it('applies transforms and arguments', function() {
-  //   simpleParse('foo|tr1|tr2.baz|tr3({bar:"tek"})').should.deep.equal({
-  //     type: 'Transform',
-  //     name: 'tr3',
-  //     args: [{
-  //       type: 'ObjectLiteral',
-  //       value: {
-  //         bar: {type: 'Literal', value: 'tek'}
-  //       }
-  //     }],
-  //     subject: {
-  //       type: 'VariableIdentifier',
-  //       value: 'baz',
-  //       from: {
-  //         type: 'Transform',
-  //         name: 'tr2',
-  //         args: [],
-  //         subject: {
-  //           type: 'Transform',
-  //           name: 'tr1',
-  //           args: [],
-  //           subject: {
-  //             type: 'VariableIdentifier',
-  //             value: 'foo'
-  //           }
-  //         }
-  //       }
-  //     }
-  //   });
-  // });
-  // it('handles multiple arguments in transforms', function() {
-  //   simpleParse('foo|bar("tek", 5, true)').should.deep.equal({
-  //     type: 'Transform',
-  //     name: 'bar',
-  //     args: [
-  //       {type: 'Literal', value: 'tek'},
-  //       {type: 'Literal', value: 5},
-  //       {type: 'Literal', value: true}
-  //     ],
-  //     subject: {type: 'VariableIdentifier', value: 'foo'}
-  //   });
-  // });
-  // it('applies filters to identifiers', function() {
-  //   simpleParse('foo[1][.bar[0]=="tek"].baz').should.deep.equal({
-  //     type: 'VariableIdentifier',
-  //     value: 'baz',
-  //     from: {
-  //       type: 'FilterExpression',
-  //       relative: true,
-  //       expr: {
-  //         type: 'BinaryExpression',
-  //         operator: '==',
-  //         left: {
-  //           type: 'FilterExpression',
-  //           relative: false,
-  //           expr: {type: 'Literal', value: 0},
-  //           subject: {
-  //             type: 'VariableIdentifier',
-  //             value: 'bar',
-  //             relative: true
-  //           }
-  //         },
-  //         right: {type: 'Literal', value: 'tek'}
-  //       },
-  //       subject: {
-  //         type: 'FilterExpression',
-  //         relative: false,
-  //         expr: {type: 'Literal', value: 1},
-  //         subject: {type: 'VariableIdentifier', value: 'foo'}
-  //       }
-  //     }
-  //   });
-  // });
   it('allows dot notation for all operands', function() {
     simpleParse('"foo".length + {foo: "bar"}.foo').should.deep.equal({
       type: 'BinaryExpression',

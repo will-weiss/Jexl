@@ -8,25 +8,27 @@ var should = require('chai').should(),
   Parser = require('../../lib/parser/Parser'),
   grammar = require('../../lib/grammar').elements;
 
-var inst,
-  lexer = new Lexer(grammar);
+var lexer = new Lexer(grammar);
 
 function completeParse(exp) {
   var tokenized = lexer.tokenize(exp);
-  // console.log(tokenized)
-
+  var inst = new Parser(grammar, null, null, 'programStart');
   inst.addTokens(tokenized);
   return inst.complete();
 };
 
 function simpleParse(exp) {
-  return completeParse(exp).body[0];
-}
+  var tokenized = lexer.tokenize(exp);
+  var inst = new Parser(grammar);
+  inst.addTokens(tokenized);
+  return inst.complete();
+};
+
+// function simpleParse(exp) {
+//   return completeParse(exp).body[0];
+// }
 
 describe('Parser', function() {
-  beforeEach(function() {
-    inst = new Parser(grammar, null, null, 'programStart');
-  });
   it('constructs an AST for 1+2', function() {
     simpleParse('1+2').should.deep.equal({
       type: 'BinaryExpression',
@@ -250,7 +252,34 @@ describe('Parser', function() {
       }
     });
   });
-  it('chains traversed identifiers', function() {
+  it('applies more functions using parens', function() {
+    simpleParse('foo(bar 5 7)').should.deep.equal({
+      "type": "CallExpression",
+      "function": {
+        "type": "VariableIdentifier",
+        "value": "foo"
+      },
+      "right": {
+        "type": "CallExpression",
+        "function": {
+          "type": "CallExpression",
+          "function": {
+            "type": "VariableIdentifier",
+            "value": "bar"
+          },
+          "right": {
+            "type": "Literal",
+            "value": 5
+          }
+        },
+        "right": {
+          "type": "Literal",
+          "value": 7
+        }
+      }
+    });
+  });
+  it('treats dot as function application', function() {
     simpleParse('foo.bar.baz + 1').should.deep.equal({
       type: 'BinaryExpression',
       operator: '+',
@@ -275,52 +304,27 @@ describe('Parser', function() {
       right: {type: 'Literal', value: 1}
     });
   });
-  // it('allows dot notation for all operands', function() {
-  //   simpleParse('"foo".length + {foo: "bar"}.foo').should.deep.equal({
-  //     type: 'BinaryExpression',
-  //     operator: '+',
-  //     left: {
-  //       type: 'VariableIdentifier',
-  //       value: 'length',
-  //       from: {type: 'Literal', value: 'foo'}
-  //     },
-  //     right: {
-  //       type: 'VariableIdentifier',
-  //       value: 'foo',
-  //       from: {
-  //         type: 'ObjectLiteral',
-  //         value: {
-  //           foo: {type: 'Literal', value: 'bar'}
-  //         }
-  //       }
-  //     }
-  //   });
-  // });
-  // it('allows dot notation on subexpressions', function() {
-  //   simpleParse('("foo" + "bar").length').should.deep.equal({
-  //     type: 'VariableIdentifier',
-  //     value: 'length',
-  //     from: {
-  //       type: 'BinaryExpression',
-  //       operator: '+',
-  //       left: {type: 'Literal', value: 'foo'},
-  //       right: {type: 'Literal', value: 'bar'}
-  //     }
-  //   });
-  // });
-  // it('allows dot notation on arrays', function() {
-  //   simpleParse('["foo", "bar"].length').should.deep.equal({
-  //     type: 'VariableIdentifier',
-  //     value: 'length',
-  //     from: {
-  //       type: 'ArrayLiteral',
-  //       value: [
-  //         {type: 'Literal', value: 'foo'},
-  //         {type: 'Literal', value: 'bar'}
-  //       ]
-  //     }
-  //   });
-  // });
+  it('treats dot as function application with additional arguments', function() {
+    simpleParse('foo.slice(1)').should.deep.equal({
+      type: 'CallExpression',
+      function: {
+        type: 'CallExpression',
+        function: {
+          "type": "VariableIdentifier",
+          "value": "slice"
+        },
+        right: {
+          type: 'VariableIdentifier',
+          value: 'foo'
+        }
+      },
+      right: {
+        "type": "Literal",
+        "value": 1
+      },
+    });
+    simpleParse('foo.slice(1)').should.deep.equal(simpleParse('slice foo 1'));
+  });
   it('handles a ternary expression', function() {
     simpleParse('foo ? 1 : 0').should.deep.equal({
       type: 'ConditionalExpression',
@@ -370,8 +374,11 @@ describe('Parser', function() {
   });
   it('allows variable declarations', function() {
     simpleParse('foo = 5').should.deep.equal({
-      type: 'VariableDeclaration',
-      identifier: 'foo',
+      type: 'VariableDefinition',
+      "left": {
+        "type": "VariableIdentifier",
+        "value": "foo"
+      },
       right: {
         type: 'Literal',
         value: 5
@@ -380,7 +387,7 @@ describe('Parser', function() {
   });
   it('allows enum type declarations', function() {
     simpleParse('Color = red | blue | yellow').should.deep.equal({
-      type: 'TypeDeclaration',
+      type: 'TypeDefinition',
       identifier: 'Color',
       right: {
         type: 'UnionExpression',
@@ -402,4 +409,115 @@ describe('Parser', function() {
       }
     });
   });
+  it('recognizes typings', function() {
+    simpleParse('foo: string = "b"').should.deep.equal({
+      "type": "VariableDefinition",
+      "varType": "string",
+      "left": {
+        "type": "VariableIdentifier",
+        "value": "foo"
+      },
+      "right": {
+        "type": "Literal",
+        "value": "b"
+      }
+    });
+  });
+  it('recognizes function typings', function() {
+    simpleParse('foo: string -> number -> boolean').should.deep.equal({
+      "type": "VariableDefinition",
+      "varType": ["string", "number", "boolean"],
+      "left": {
+        "type": "VariableIdentifier",
+        "value": "foo"
+      }
+    });
+  });
+  it('recognizes function typings', function() {
+    simpleParse('foo a b = a + b').should.deep.equal({
+      "type": "VariableDefinition",
+      "left": {
+        "type": "CallExpression",
+        "function": {
+          "type": "CallExpression",
+          "function": {
+            "type": "VariableIdentifier",
+            "value": "foo",
+          },
+          "right": {
+            "type": "VariableIdentifier",
+            "value": "a",
+          },
+        },
+        "right": {
+          "type": "VariableIdentifier",
+          "value": "b",
+        },
+      },
+      "right": {
+        "type": "BinaryExpression",
+        "operator": "+",
+        "left": {
+          "type": "VariableIdentifier",
+          "value": "a",
+        },
+        "right": {
+          "type": "VariableIdentifier",
+          "value": "b",
+        },
+      },
+    });
+  });
+  it('recognizes function typings', function() {
+    return simpleParse.bind(null, 'foo = bar = baz').should.throw();
+  });
+
+
+
+  // it('allows dot notation for all operands', function() {
+  //   simpleParse('"foo".length + {foo: "bar"}.foo').should.deep.equal({
+  //     type: 'BinaryExpression',
+  //     operator: '+',
+  //     left: {
+  //       type: 'VariableIdentifier',
+  //       value: 'length',
+  //       from: {type: 'Literal', value: 'foo'}
+  //     },
+  //     right: {
+  //       type: 'VariableIdentifier',
+  //       value: 'foo',
+  //       from: {
+  //         type: 'ObjectLiteral',
+  //         value: {
+  //           foo: {type: 'Literal', value: 'bar'}
+  //         }
+  //       }
+  //     }
+  //   });
+  // });
+  // it('allows dot notation on subexpressions', function() {
+  //   simpleParse('("foo" + "bar").length').should.deep.equal({
+  //     type: 'VariableIdentifier',
+  //     value: 'length',
+  //     from: {
+  //       type: 'BinaryExpression',
+  //       operator: '+',
+  //       left: {type: 'Literal', value: 'foo'},
+  //       right: {type: 'Literal', value: 'bar'}
+  //     }
+  //   });
+  // });
+  // it('allows dot notation on arrays', function() {
+  //   simpleParse('["foo", "bar"].length').should.deep.equal({
+  //     type: 'VariableIdentifier',
+  //     value: 'length',
+  //     from: {
+  //       type: 'ArrayLiteral',
+  //       value: [
+  //         {type: 'Literal', value: 'foo'},
+  //         {type: 'Literal', value: 'bar'}
+  //       ]
+  //     }
+  //   });
+  // });
 });

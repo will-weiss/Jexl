@@ -229,36 +229,23 @@ describe('Parser', function() {
       }
     });
   });
-  // it('chains traversed identifiers', function() {
-  //   simpleParse('foo.bar.baz + 1').should.deep.equal({
-  //     type: 'BinaryExpression',
-  //     operator: '+',
-  //     left: {
-  //       type: 'CallExpression',
-  //       function: 'baz',
-  //       argument: {
-  //         type: 'CallExpression',
-  //         function: 'bar',
-  //         from: {
-  //           type: 'VariableIdentifier',
-  //           value: 'foo'
-  //         }
-  //       }
-  //     },
-  //     right: {type: 'Literal', value: 1}
-  //   });
-  // });
   it('chains traversed identifiers', function() {
     simpleParse('foo.bar.baz + 1').should.deep.equal({
       type: 'BinaryExpression',
       operator: '+',
       left: {
-        type: 'VariableIdentifier',
-        value: 'baz',
-        from: {
-          type: 'VariableIdentifier',
-          value: 'bar',
-          from: {
+        type: 'CallExpression',
+        function: {
+          "type": "VariableIdentifier",
+          "value": "baz"
+        },
+        argument: {
+          type: 'CallExpression',
+          function: {
+            "type": "VariableIdentifier",
+            "value": "bar"
+          },
+          argument: {
             type: 'VariableIdentifier',
             value: 'foo'
           }
@@ -267,52 +254,52 @@ describe('Parser', function() {
       right: {type: 'Literal', value: 1}
     });
   });
-  it('allows dot notation for all operands', function() {
-    simpleParse('"foo".length + {foo: "bar"}.foo').should.deep.equal({
-      type: 'BinaryExpression',
-      operator: '+',
-      left: {
-        type: 'VariableIdentifier',
-        value: 'length',
-        from: {type: 'Literal', value: 'foo'}
-      },
-      right: {
-        type: 'VariableIdentifier',
-        value: 'foo',
-        from: {
-          type: 'ObjectLiteral',
-          value: {
-            foo: {type: 'Literal', value: 'bar'}
-          }
-        }
-      }
-    });
-  });
-  it('allows dot notation on subexpressions', function() {
-    simpleParse('("foo" + "bar").length').should.deep.equal({
-      type: 'VariableIdentifier',
-      value: 'length',
-      from: {
-        type: 'BinaryExpression',
-        operator: '+',
-        left: {type: 'Literal', value: 'foo'},
-        right: {type: 'Literal', value: 'bar'}
-      }
-    });
-  });
-  it('allows dot notation on arrays', function() {
-    simpleParse('["foo", "bar"].length').should.deep.equal({
-      type: 'VariableIdentifier',
-      value: 'length',
-      from: {
-        type: 'ArrayLiteral',
-        value: [
-          {type: 'Literal', value: 'foo'},
-          {type: 'Literal', value: 'bar'}
-        ]
-      }
-    });
-  });
+  // it('allows dot notation for all operands', function() {
+  //   simpleParse('"foo".length + {foo: "bar"}.foo').should.deep.equal({
+  //     type: 'BinaryExpression',
+  //     operator: '+',
+  //     left: {
+  //       type: 'VariableIdentifier',
+  //       value: 'length',
+  //       from: {type: 'Literal', value: 'foo'}
+  //     },
+  //     right: {
+  //       type: 'VariableIdentifier',
+  //       value: 'foo',
+  //       from: {
+  //         type: 'ObjectLiteral',
+  //         value: {
+  //           foo: {type: 'Literal', value: 'bar'}
+  //         }
+  //       }
+  //     }
+  //   });
+  // });
+  // it('allows dot notation on subexpressions', function() {
+  //   simpleParse('("foo" + "bar").length').should.deep.equal({
+  //     type: 'VariableIdentifier',
+  //     value: 'length',
+  //     from: {
+  //       type: 'BinaryExpression',
+  //       operator: '+',
+  //       left: {type: 'Literal', value: 'foo'},
+  //       right: {type: 'Literal', value: 'bar'}
+  //     }
+  //   });
+  // });
+  // it('allows dot notation on arrays', function() {
+  //   simpleParse('["foo", "bar"].length').should.deep.equal({
+  //     type: 'VariableIdentifier',
+  //     value: 'length',
+  //     from: {
+  //       type: 'ArrayLiteral',
+  //       value: [
+  //         {type: 'Literal', value: 'foo'},
+  //         {type: 'Literal', value: 'bar'}
+  //       ]
+  //     }
+  //   });
+  // });
   it('handles a ternary expression', function() {
     simpleParse('foo ? 1 : 0').should.deep.equal({
       type: 'ConditionalExpression',
